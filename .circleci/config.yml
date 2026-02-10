@@ -1,0 +1,27 @@
+version: 2.1
+
+jobs:
+  test-ansible-role:
+    docker:
+      - image: cimg/python:3.10
+    steps:
+      - checkout
+
+      - name: Install Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible
+
+      - name: Create ansible config
+        run: |
+          echo "[defaults]" > ansible.cfg
+          echo "roles_path=roles" >> ansible.cfg
+
+      - name: Run Ansible role test
+        run: |
+          ansible-playbook tests/test.yml -i localhost, -c local
+
+workflows:
+  ansible-role-workflow:
+    jobs:
+      - test-ansible-role
