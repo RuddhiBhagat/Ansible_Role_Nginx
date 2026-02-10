@@ -5,8 +5,7 @@
     state: present
     update_cache: yes
 
-- name: Start and enable Nginx service
-  service:
-    name: nginx
-    state: started
-    enabled: yes
+- name: Verify nginx is installed
+  command: nginx -v
+  register: nginx_version
+  changed_when: false
