@@ -23,8 +23,41 @@ jobs:
           name: Run Ansible role test
           command: |
             ansible-playbook tests/test.yml -i localhost, -c local
+  publish-role:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+
+      - run:
+          name: Clone internal roles repo
+          command: |
+            git clone git@github.com:RuddhiBhagat/ansible-roles-internal.git
+
+      - run:
+          name: Publish nginx role
+          command: |
+            rm -rf ansible-roles-internal/roles/nginx
+            cp -r roles/nginx ansible-roles-internal/roles/
+
+      - run:
+          name: Commit and push
+          command: |
+            cd ansible-roles-internal
+            git config user.email "ci@company.com"
+            git config user.name "circleci"
+            git add roles/nginx
+            git commit -m "Publish nginx role from CI - ${CIRCLE_SHA1}"
+            git push origin main
 
 workflows:
-  ansible-role-workflow:
+  test-and-publish:
     jobs:
       - test-ansible-role
+      - publish-role:
+          requires:
+            - test-ansible-role
+          filters:
+            branches:
+              only: main
+
