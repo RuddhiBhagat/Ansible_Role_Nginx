@@ -7,19 +7,22 @@ jobs:
     steps:
       - checkout
 
-      - name: Install Ansible
-        run: |
-          python -m pip install --upgrade pip
-          pip install ansible
+      - run:
+          name: Install Ansible
+          command: |
+            python -m pip install --upgrade pip
+            pip install ansible
 
-      - name: Create ansible config
-        run: |
-          echo "[defaults]" > ansible.cfg
-          echo "roles_path=roles" >> ansible.cfg
+      - run:
+          name: Create ansible config
+          command: |
+            echo "[defaults]" > ansible.cfg
+            echo "roles_path=roles" >> ansible.cfg
 
-      - name: Run Ansible role test
-        run: |
-          ansible-playbook tests/test.yml -i localhost, -c local
+      - run:
+          name: Run Ansible role test
+          command: |
+            ansible-playbook tests/test.yml -i localhost, -c local
 
 workflows:
   ansible-role-workflow:
