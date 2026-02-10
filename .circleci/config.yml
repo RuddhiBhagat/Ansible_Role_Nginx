@@ -29,6 +29,10 @@ jobs:
     steps:
       - checkout
 
+      - add_ssh_keys:
+        fingerprints:
+          - "SHA256:spM+NWIXBNZTgCoSulPZZNWcuriASORuBDA3Z67Af9Y"
+
       - run:
           name: Clone internal roles repo
           command: |
