@@ -42,7 +42,11 @@ jobs:
           command: |
             rm -rf ansible-roles-internal/roles/nginx
             mkdir -p ansible-roles-internal/roles
-            cp -r roles/nginx ansible-roles-internal/roles/
+            cp -r roles/nginx/tasks ansible-roles-internal/roles/nginx/
+            cp -r roles/nginx/meta ansible-roles-internal/roles/nginx/
+            cp -r roles/nginx/defaults ansible-roles-internal/roles/nginx/ || true
+            cp -r roles/nginx/handlers ansible-roles-internal/roles/nginx/ || true
+            cp roles/nginx/README.md ansible-roles-internal/roles/nginx/ || true
 
       - run:
           name: Commit and push
