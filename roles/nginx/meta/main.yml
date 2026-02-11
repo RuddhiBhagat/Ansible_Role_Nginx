@@ -1,5 +1,5 @@
----
 galaxy_info:
+  namespace: ruddhibhagat 
   role_name: nginx
   author: Ruddhi Bhagat
   description: Install and configure Nginx web server
