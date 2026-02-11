@@ -1,47 +1,47 @@
 version: 2.1
 
 jobs:
-  test-ansible-role:
+  test-role:
     docker:
       - image: cimg/python:3.10
     steps:
       - checkout
 
+      # Required for Molecule Docker driver
+      - setup_remote_docker
+
       - run:
-          name: Install Ansible
+          name: Install Ansible + Testing Tools
           command: |
             python -m pip install --upgrade pip
-            pip install ansible
+            pip install ansible ansible-lint molecule molecule-docker docker
 
       - run:
-          name: Create ansible config
-          command: |
-            echo "[defaults]" > ansible.cfg
-            echo "roles_path=roles" >> ansible.cfg
+          name: Run ansible-lint
+          command: ansible-lint roles/nginx
 
       - run:
-          name: Run Ansible role test
+          name: Run Molecule tests (includes idempotency)
           command: |
-            ansible-playbook tests/test.yml -i localhost, -c local
+            cd roles/nginx
+            molecule test
+
   publish-role:
     docker:
       - image: cimg/base:stable
     steps:
       - checkout
 
-      - add_ssh_keys:
-          fingerprints:
-            - "SHA256:spM+NWIXBNZTgCoSulPZZNWcuriASORuBDA3Z67Af9Y"
-
       - run:
-          name: Clone internal roles repo
+          name: Clone internal roles repo using PAT
           command: |
-            git clone git@github.com:RuddhiBhagat/ansible-roles-internal.git
+            git clone https://${GITHUB_TOKEN}@github.com/RuddhiBhagat/ansible-roles-internal.git
 
       - run:
           name: Publish nginx role
           command: |
             rm -rf ansible-roles-internal/roles/nginx
+            mkdir -p ansible-roles-internal/roles
             cp -r roles/nginx ansible-roles-internal/roles/
 
       - run:
@@ -51,18 +51,16 @@ jobs:
             git config user.email "ci@company.com"
             git config user.name "circleci"
             git add roles/nginx
-            git commit -m "Publish nginx role from CI - ${CIRCLE_SHA1}"
+            git commit -m "Publish nginx role from CI - ${CIRCLE_SHA1}" || echo "No changes to commit"
             git push origin main
 
 workflows:
   test-and-publish:
     jobs:
-      - test-ansible-role
+      - test-role
       - publish-role:
           requires:
-            - test-ansible-role
+            - test-role
           filters:
             branches:
               only: main
-
-##
