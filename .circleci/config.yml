@@ -5,7 +5,8 @@ jobs:
     docker:
       - image: cimg/python:3.10
     steps:
-      - checkout
+      - checkout:
+          fetch-depth: 0
 
       # Required for Molecule Docker driver
       - setup_remote_docker
@@ -26,11 +27,60 @@ jobs:
             cd roles/nginx
             molecule test
 
+
   publish-role:
     docker:
       - image: cimg/base:stable
     steps:
-      - checkout
+      - checkout:
+          fetch-depth: 0
+
+      - run:
+          name: Configure Git
+          command: |
+            git config --global user.email "ci@company.com"
+            git config --global user.name "circleci"
+
+      - run:
+          name: Auto version bump (semantic)
+          shell: /bin/bash
+          command: |
+            set -e
+            git fetch --tags
+
+            latest_tag=$(git tag --sort=-v:refname | head -n 1)
+
+            if [ -z "$latest_tag" ]; then
+              new_tag="v1.0.0"
+            else
+              version=${latest_tag#v}
+              IFS='.' read -r major minor patch <<< "$version"
+
+              commit_msg=$(git log -1 --pretty=%B)
+              echo "Latest commit message: $commit_msg"
+
+              commit_msg_lower=$(echo "$commit_msg" | tr '[:upper:]' '[:lower:]')
+
+              if echo "$commit_msg_lower" | grep -qE '\bmajor\b'; then
+                major=$((major + 1))
+                minor=0
+                patch=0
+              elif echo "$commit_msg_lower" | grep -qE '\bminor\b'; then
+                minor=$((minor + 1))
+                patch=0
+              else
+                patch=$((patch + 1))
+              fi
+
+              new_tag="v$major.$minor.$patch"
+            fi
+
+            echo "New tag: $new_tag"
+
+            git tag $new_tag
+            git push https://${GITHUB_TOKEN}@github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git $new_tag
+
+            echo "export RELEASE_VERSION=$new_tag" >> $BASH_ENV
 
       - run:
           name: Clone internal roles repo using PAT
@@ -38,25 +88,30 @@ jobs:
             git clone https://${GITHUB_TOKEN}@github.com/RuddhiBhagat/ansible-roles-internal.git
 
       - run:
-          name: Publish nginx role
+          name: Publish nginx role with semantic version
           command: |
-            rm -rf ansible-roles-internal/roles/nginx
-            mkdir -p ansible-roles-internal/roles
-            cp -r roles/nginx/tasks ansible-roles-internal/roles/nginx/
-            cp -r roles/nginx/meta ansible-roles-internal/roles/nginx/
-            cp -r roles/nginx/defaults ansible-roles-internal/roles/nginx/ || true
-            cp -r roles/nginx/handlers ansible-roles-internal/roles/nginx/ || true
-            cp roles/nginx/README.md ansible-roles-internal/roles/nginx/ || true
+            cd ansible-roles-internal
+
+            mkdir -p roles/nginx/${RELEASE_VERSION}
+
+            cp -r ../roles/nginx/tasks roles/nginx/${RELEASE_VERSION}/
+            cp -r ../roles/nginx/meta roles/nginx/${RELEASE_VERSION}/
+            cp -r ../roles/nginx/defaults roles/nginx/${RELEASE_VERSION}/ || true
+            cp -r ../roles/nginx/handlers roles/nginx/${RELEASE_VERSION}/ || true
+            cp ../roles/nginx/README.md roles/nginx/${RELEASE_VERSION}/ || true
+
+            echo "Published version ${RELEASE_VERSION}"
 
       - run:
-          name: Commit and push
+          name: Commit and push to internal repo
           command: |
             cd ansible-roles-internal
             git config user.email "ci@company.com"
             git config user.name "circleci"
             git add roles/nginx
-            git commit -m "Publish nginx role from CI - ${CIRCLE_SHA1}" || echo "No changes to commit"
+            git commit -m "Release nginx ${RELEASE_VERSION}" || echo "No changes to commit"
             git push origin main
+
 
 workflows:
   test-and-publish:
