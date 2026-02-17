@@ -54,7 +54,7 @@ jobs:
               new_tag="v1.0.0"
             else
               version=${latest_tag#v}
-              IFS='.' read -r major minor patch <<< "$version"
+              IFS='.' read -r major minor patch < <(echo "$version")
 
               commit_msg=$(git log -1 --pretty=%B)
               echo "Latest commit message: $commit_msg"
