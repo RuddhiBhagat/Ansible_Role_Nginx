@@ -8,7 +8,6 @@ jobs:
       - checkout:
           fetch-depth: 0
 
-      # Required for Molecule Docker driver
       - setup_remote_docker
 
       - run:
@@ -26,7 +25,6 @@ jobs:
           command: |
             cd roles/nginx
             molecule test
-
 
   publish-role:
     docker:
@@ -57,8 +55,6 @@ jobs:
               IFS='.' read -r major minor patch < <(echo "$version")
 
               commit_msg=$(git log -1 --pretty=%B)
-              echo "Latest commit message: $commit_msg"
-
               commit_msg_lower=$(echo "$commit_msg" | tr '[:upper:]' '[:lower:]')
 
               if echo "$commit_msg_lower" | grep -qE '\bmajor\b'; then
@@ -85,42 +81,36 @@ jobs:
       - run:
           name: Clone internal roles repo using PAT
           command: |
-            git clone https://${GITHUB_TOKEN}@github.com/RuddhiBhagat/ansible-roles-internal.git
+            git clone https://${GITHUB_TOKEN}@github.com/atyeti-inc/Ansible-role-test-nginx-internal.git
 
       - run:
           name: Publish nginx role with semantic version
           command: |
-            cd ansible-roles-internal
-
+            cd Ansible-role-test-nginx-internal
             mkdir -p roles/nginx/${RELEASE_VERSION}
 
             cp -r ../roles/nginx/tasks roles/nginx/${RELEASE_VERSION}/
             cp -r ../roles/nginx/meta roles/nginx/${RELEASE_VERSION}/
-            cp -r ../roles/nginx/defaults roles/nginx/${RELEASE_VERSION}/ || true
-            cp -r ../roles/nginx/handlers roles/nginx/${RELEASE_VERSION}/ || true
-            cp ../roles/nginx/README.md roles/nginx/${RELEASE_VERSION}/ || true
-
-            echo "Published version ${RELEASE_VERSION}"
 
       - run:
           name: Commit and push to internal repo
           command: |
-            cd ansible-roles-internal
-            git config user.email "ci@company.com"
-            git config user.name "circleci"
+            cd Ansible-role-test-nginx-internal
             git add roles/nginx
             git commit -m "Release nginx ${RELEASE_VERSION}" || echo "No changes to commit"
-            git push origin main
-
+            git push origin master
 
 workflows:
+  version: 2
   test-and-publish:
     jobs:
       - test-role
+
       - publish-role:
+          context:
+            - atyeti
           requires:
             - test-role
           filters:
             branches:
               only: main
-#####
