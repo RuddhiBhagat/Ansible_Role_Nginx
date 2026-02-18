@@ -9,3 +9,7 @@
   ansible.builtin.command: nginx -v
   register: nginx_version
   changed_when: false
+
+- name: Force failure for CI test
+  ansible.builtin.fail:
+    msg: "Intentional failure to test CI pipeline"
