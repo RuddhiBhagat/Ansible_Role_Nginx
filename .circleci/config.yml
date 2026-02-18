@@ -81,7 +81,8 @@ jobs:
       - run:
           name: Clone internal roles repo using PAT
           command: |
-            git clone https://${GITHUB_TOKEN}@github.com/atyeti-inc/Ansible-role-test-nginx-internal.git
+           git clone https://${GITHUB_TOKEN}@github.com/RuddhiBhagat/ansible-roles-internal.git
+
 
       - run:
           name: Publish nginx role with semantic version
