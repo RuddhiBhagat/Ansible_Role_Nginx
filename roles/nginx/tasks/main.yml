@@ -10,4 +10,3 @@
   register: nginx_version
   changed_when: false
 
-##
