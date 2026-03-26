@@ -30,7 +30,7 @@
 #    state: started
 #    enabled: true
 #  become: true
-
+#
 - name: Start nginx manually
   ansible.builtin.command: nginx
   changed_when: false
