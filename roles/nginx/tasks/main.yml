@@ -24,11 +24,16 @@
     mode: '0644'
   become: true
 
-- name: Enable and start nginx
-  ansible.builtin.service:
-    name: nginx
-    state: started
-    enabled: true
+#- name: Enable and start nginx
+#  ansible.builtin.service:
+#    name: nginx
+#    state: started
+#    enabled: true
+#  become: true
+
+- name: Start nginx manually
+  ansible.builtin.command: nginx
+  changed_when: false
   become: true
 
 - name: Check nginx version
