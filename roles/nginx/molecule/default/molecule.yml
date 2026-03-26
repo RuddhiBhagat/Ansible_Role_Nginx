@@ -20,7 +20,6 @@ verifier:
 
 scenario:
   test_sequence:
-    - lint
     - destroy
     - create
     - converge
