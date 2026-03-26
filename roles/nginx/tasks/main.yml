@@ -5,6 +5,29 @@
     state: present
     update_cache: true
 
+- name: Add default nginx config
+  ansible.builtin.copy:
+    dest: /etc/nginx/sites-available/default
+    content: |
+      server {
+          listen 80 default_server;
+          listen [::]:80 default_server;
+          root /var/www/html;
+          index index.html index.htm;
+          server_name _;
+          location / {
+              try_files $uri $uri/ =404;
+          }
+      }
+  become: true
+
+- name: Enable and start nginx
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true
+  become: true
+
 - name: Check nginx version
   ansible.builtin.command: nginx -v
   register: nginx_version
