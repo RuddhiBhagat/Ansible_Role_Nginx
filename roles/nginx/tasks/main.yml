@@ -19,6 +19,9 @@
               try_files $uri $uri/ =404;
           }
       }
+    owner: root
+    group: root
+    mode: '0644'
   become: true
 
 - name: Enable and start nginx
